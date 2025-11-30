@@ -1,24 +1,16 @@
 import json
 from datetime import date
+from django.shortcuts import render
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 
+from .models import Ticket
 from .scoring import score_tasks
 from .serializers import validate_task
 
 
 @csrf_exempt
 def analyze_tasks(request):
-    """
-    POST /api/tasks/analyze/
-    Expects:
-    {
-      "strategy": "smart_balance",
-      "tasks": [ { ... }, ... ]
-    }
-    or simply:
-    [ { ... }, ... ]
-    """
     if request.method != "POST":
         return JsonResponse({"error": "Only POST allowed"}, status=405)
 
@@ -51,8 +43,21 @@ def analyze_tasks(request):
             status=400,
         )
 
+    # Score tasks
     scored = score_tasks(tasks, strategy=strategy)
 
+    # 🔹 Save each scored task as a Ticket in DB
+    for task in scored:
+        Ticket.objects.create(
+            strategy=strategy,
+            title=task.get("title", "Untitled"),
+            due_date=task.get("due_date"),          # "YYYY-MM-DD" is fine for DateField
+            importance=task.get("importance", 5),
+            estimated_hours=task.get("estimated_hours", 1),
+            score=task.get("score", 0),
+        )
+
+    # Return scored tasks to frontend
     return JsonResponse({"tasks": scored}, status=200)
 
 
@@ -61,7 +66,6 @@ def suggest_tasks(request):
     GET /api/tasks/suggest/
     For simplicity, expect a query param:
       ?strategy=smart_balance&tasks_json=<url-encoded JSON array>
-    In a real app, you'd load tasks from the database instead.
     """
     strategy = request.GET.get("strategy", "smart_balance")
     tasks_json = request.GET.get("tasks_json")
@@ -108,4 +112,19 @@ def suggest_tasks(request):
             "strategy": strategy,
             "suggestions": suggestions,
         }
+    )
+
+
+def tickets_page(request):
+    # which tab is active
+    strategy = request.GET.get("strategy", "smart_balance")
+    tickets = Ticket.objects.filter(strategy=strategy).order_by("-created_at")
+
+    return render(
+        request,
+        "tickets.html",
+        {
+            "tickets": tickets,
+            "selected_strategy": strategy,
+        },
     )

@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="/static/styles.css">
+    <style>
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 18px;
+        }
+        .tab {
+            padding: 10px 16px;
+            border: 1px solid #4f46e5;
+            border-radius: 8px;
+            cursor: pointer;
+            background: #020617;
+            color: white;
+            text-decoration: none;
+        }
+        .tab.active {
+            background: #4f46e5;
+        }
+
+        /* New Button */
+        .back-btn {
+            display: inline-block;
+            margin-bottom: 20px;
+            padding: 10px 16px;
+            background: linear-gradient(135deg, #4f46e5, #6366f1);
+            color: #fff;
+            text-decoration: none;
+            font-weight: 600;
+            border-radius: 10px;
+            box-shadow: 0 6px 18px rgba(79, 70, 229, 0.3);
+            transition: 0.2s ease;
+        }
+        .back-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(79, 70, 229, 0.4);
+        }
+    </style>
+</head>
+<body>
+
+<h2 style="text-align:center; margin-bottom:20px;">Saved Tickets</h2>
+
+<!-- ⭐ Back to Add Tasks Page Button -->
+<div style="text-align:center;">
+    <a href="/" class="back-btn">+ Add More Tasks</a>
+</div>
+
+<div class="tabs">
+    <a href="?strategy=smart_balance" class="tab {% if selected_strategy == 'smart_balance' %}active{% endif %}">Smart Balance</a>
+    <a href="?strategy=high_impact" class="tab {% if selected_strategy == 'high_impact' %}active{% endif %}">High Impact</a>
+    <a href="?strategy=fastest_wins" class="tab {% if selected_strategy == 'fastest_wins' %}active{% endif %}">Fastest Wins</a>
+    <a href="?strategy=deadline_driven" class="tab {% if selected_strategy == 'deadline_driven' %}active{% endif %}">Deadline Driven</a>
+</div>
+
+<div class="tickets-container">
+    {% for t in tickets %}
+    <div class="task-card priority-high">
+        <div class="task-title">{{ t.title }}</div>
+        <div class="task-meta"> Due: {{ t.due_date }} | Score: {{ t.score }} </div>
+    </div>
+    {% empty %}
+    <p>No tickets saved for this strategy.</p>
+    {% endfor %}
+</div>
+
+</body>
+</html>
